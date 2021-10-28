@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="main-wrapper"
+  >
+    <h1>
+      Hello World
+    </h1>
+    <style>
+      
+        .main-wrapper {
+          max-width: 620px;
+          margin: auto;
+          margin-top: 30px;
+          padding: 15px;
+        }
+      
+    </style>
+  </div>
+</DocumentFragment>
+`;

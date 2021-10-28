@@ -1,0 +1,46 @@
+{
+  "name": "Samsung Galaxy S20+ 5G Cosmic Grey",
+  "images": [
+    "https://shop.ee.co.uk/content/dam/everything-everywhere/images/SHOP/Devices/samsung/samsung_galaxy_s20_plus_5g/samsung_galaxy_s20_plus_5g_gry_affilliates_800x800.png",
+    "https://shop.ee.co.uk/medias/samsung-galaxy-s20-plus-5g-cosmic-grey-front-Format-960?context=bWFzdGVyfHJvb3R8MTE0MDM4fGltYWdlL2pwZWd8c3lzLW1hc3Rlci9yb290L2hkNS9oZDIvOTQ1MTY3NzcxMjQxNC9zYW1zdW5nLWdhbGF4eS1zMjAtcGx1cy01Zy1jb3NtaWMtZ3JleS1mcm9udF9Gb3JtYXQtOTYwfDExYjkzZjY0YmQwNDAyZmY0ZTUzZWNmMzJmMWRjNGE1NjM5MGZjYWNiZTE5ZWY4NzAwODFiYzBlZDcxODE4Y2M"
+  ],
+  "description": "The Samsung Galaxy S20+ 5G boasting a 64MP Telephoto Camera, 6.7-inch QHD+ AMOLED display and 5G ready. Buy your cosmic grey 5G phone today.",
+  "brand": "Samsung",
+  "reviews": [
+    {
+      "author": {
+        "type": "Person",
+        "name": "Jim"
+      },
+      "datePublished": "2017-01-06T03:37:40Z",
+      "reviewBody": "This is my favorite product yet! Thanks Nate for the example products and reviews.",
+      "name": "So awesome!!!",
+      "reviewRating": {
+        "bestRating": "5",
+        "ratingValue": "5",
+        "worstRating": "1"
+      },
+      "publisher": {
+        "type": "Organization",
+        "name": "TwoVit"
+      }
+    }
+  ],
+  "aggregateRating": {
+    "ratingValue": "4.4",
+    "reviewCount": "89"
+  },
+  "offers": [
+    {
+      "price": "779.99",
+      "priceCurrency": "GBP",
+      "priceValidUntil": "2020-07-20",
+      "itemCondition": "http://schema.org/UsedCondition",
+      "availability": "http://schema.org/InStock",
+      "url": "//shop.ee.co.uk",
+      "seller": {
+        "name": "EE"
+      }
+    }
+  ]
+}

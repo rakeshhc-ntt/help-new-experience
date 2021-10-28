@@ -1,0 +1,9 @@
+schema: './api/**/*.ts'
+noRequire: true
+documents: []
+overwrite: true
+generates:
+  ./api/generated/types.ts:
+    plugins:
+      - "typescript"
+require: []

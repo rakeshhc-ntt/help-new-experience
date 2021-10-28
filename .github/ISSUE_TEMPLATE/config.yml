@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📃 CI/CD Issue
+    url: https://docs-ui-kit-btplc.ps.intdigital.ee.co.uk/docs/contributing/intro#cicd
+    about: Continuous Integration and Continuous Delivery questions.
+  - name: ⤴️ Boilerplate
+    url: https://docs-ui-kit-btplc.ps.intdigital.ee.co.uk/docs/contributing/intro#boilerplate
+    about: Boilerplate's issues, additional features, migration, testing etc.
+  - name: 🤔 Questions and Help
+    url: https://btconsumer.slack.com/archives/C012Y4GV34M
+    about: Looking for help with FE Framework? Please refer to the `#FE-Framework` channel on Slack.
+  - name: 🚀 Code Style Guideliens
+    url: https://docs-ui-kit-btplc.ps.intdigital.ee.co.uk/docs/contributing/intro#code-style-guidelines
+    about: Templates, initial setup, git workflows and more.

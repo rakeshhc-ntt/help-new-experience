@@ -1,0 +1,17 @@
+*.log
+.DS_Store
+node_modules
+.cache
+dist
+.idea
+storybook-static
+.next
+.serverless
+.serverless_nextjs
+coverage
+.now
+.vscode
+.vercel
+e2e-tests/reports
+#This will be dynamically copy during build:ci, @see envs/README.md
+.env.production

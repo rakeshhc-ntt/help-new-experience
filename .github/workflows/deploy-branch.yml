@@ -1,0 +1,118 @@
+name: Deploy feature/develop branch
+
+on:
+  push:
+    branches:
+      - '*'         # matches every branch
+      - '*/*'       # matches every branch containing a single '/'
+      - '!master'   # excludes master
+
+  pull_request:
+    types:
+    - opened
+    - synchronize    
+
+jobs:
+  Deploy:
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    strategy:
+      matrix:
+        node-version: 
+        - 12.10
+
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Restore node_modules from cache
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Install
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          echo "" >> .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PACKAGES_TOKEN }}" >> .npmrc
+          yarn install --frozen-lockfile --ignore-scripts
+
+      - name: Checkout actions repo
+        uses: actions/checkout@v2
+        with:
+          repository: btplc/github-actions
+          path: .github/actions
+          token: ${{ secrets.GIT_PAT }}
+      - name: Install actions
+        run: cd .github/actions && yarn --frozen-lockfile
+
+      - name: Get expected URL
+        uses: ./.github/actions/getAppUrl
+        id: getAppUrl
+        with:
+          ref: ${{ github.ref }}
+          repo: ${{ github.repository }}  
+      
+      - name: Build
+        run: yarn build
+        env:
+          NODE_ENV: ${{ steps.getAppUrl.outputs.buildEnv }}
+
+      - name: Deploy code
+        uses: ./.github/actions/jenkins
+        id: deployment
+        with:
+          url: ${{ secrets.JENKINS_URL }}
+          username: ${{ secrets.JENKINS_USER }}
+          token: ${{ secrets.JENKINS_TOKEN }}
+          jobName: ${{ secrets.JENKINS_JOB_NAME }}
+          ref: ${{ github.ref }}
+          repo: ${{ github.repository }}
+          serverlessVersion: 1.14.0
+          params: --nodeVersion=nodejs12.x
+          
+      - name: Update PR/Issue
+        uses: ./.github/actions/comment
+        with:
+          body: "App deployed on ${{ steps.deployment.outputs.appUrl }}"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Wait for URL
+        uses: ./.github/actions/wait-for-url
+        with:
+          url: ${{ steps.deployment.outputs.appUrl }}
+          retryDelay: 3000
+          retries: 30
+          
+      - name: Run E2E tests 
+        run: yarn e2e:test && yarn e2e:test:report
+        env: 
+          APP_URL: ${{ steps.deployment.outputs.appUrl }} 
+      
+      - name: Upload cucumber artifacts
+        uses: actions/upload-artifact@master
+        with:
+          name: Cucumber reports
+          path: ./e2e-tests/reports
+          
+      - run: mkdir /tmp/artifacts
+      - name: Run Lighthouse
+        uses: foo-software/lighthouse-check-action@master
+        with:
+          accessToken: ${{ secrets.GITHUB_TOKEN }}
+          author: ${{ github.actor }}
+          branch: ${{ github.ref }}
+          outputDirectory: /tmp/artifacts
+          urls: '${{ steps.deployment.outputs.appUrl }},${{ steps.deployment.outputs.appUrl }}/ssr-enabled,${{ steps.deployment.outputs.appUrl }}/ssr-disabled,${{ steps.deployment.outputs.appUrl }}/seo'
+          sha: ${{ github.sha }}
+          slackWebhookUrl: ${{ secrets.LIGHTHOUSE_CHECK_WEBHOOK_URL }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@master
+        with:
+          name: Lighthouse reports
+          path: /tmp/artifacts
