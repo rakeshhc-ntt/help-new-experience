@@ -1,0 +1,43 @@
+name: Test Coverage report
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  test-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    strategy:
+      matrix:
+        node-version: [12.13]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Delete old coverage branch
+        uses: dawidd6/action-delete-branch@v3
+        with:
+          github_token: ${{github.token}}
+          branches: develop-coverage
+        continue-on-error: true
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: echo "" >> .npmrc
+      - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PACKAGES_TOKEN }}" >> .npmrc
+      - name: Install packages
+        run: yarn install --frozen-lockfile
+      - name: Generate coveraga reports
+        run: yarn test:coverage
+      - name: Create badges
+        run: yarn test:coverage-badges
+      - name: Commit coverage report
+        uses: Automattic/action-commit-to-branch@master
+        with:
+          branch: "develop-coverage"
+          commit_message: "Coverage Report"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

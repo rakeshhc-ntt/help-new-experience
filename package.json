@@ -1,0 +1,85 @@
+{
+  "name": "@btplc/sample-bt-help-app",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:BTplc/sample-bt-help-app.git"
+  },
+  "createBTAppData": {
+    "version": "2.7.2",
+    "templateName": "web-app",
+    "extraModules": "github-workflow,web-cdn,lighthouse-audit,include-linking-script,seo,pr-a11y-checklist-analyser"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/BTplc"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^3.6.1",
+    "@typescript-eslint/parser": "^3.6.1",
+    "eslint": "^7.4.0",
+    "husky": "4.3.8",
+    "prettier": "^2.0.5",
+    "typescript": "^3.9.6",
+    "@babel/core": "^7.10.5",
+    "@babel/preset-typescript": "^7.10.4",
+    "@testing-library/react": "^10.4.7",
+    "@types/jest": "^26.0.5",
+    "@types/node": "^12.12.21",
+    "@types/react-dom": "^16.9.4",
+    "@types/react": "^16.9.16",
+    "@types/enzyme": "^3.10.8",
+    "@types/enzyme-adapter-react-16": "^1.0.6",
+    "axios": "^0.20.0",
+    "babel-jest": "^26.1.0",
+    "eslint-config-airbnb-typescript": "^9.0.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-jsx-a11y": "^6.3.1",
+    "eslint-plugin-prettier": "^3.4.0",
+    "eslint-plugin-react-hooks": "^4.0.8",
+    "eslint-plugin-react": "^7.20.3",
+    "jest": "^26.1.0",
+    "jest-coverage-badges": "^1.1.2",
+    "pretty-quick": "^2.0.1",
+    "rimraf": "^3.0.2",
+    "shx": "^0.3.2",
+    "ts-jest": "^25.4.0",
+    "chalk": "^4.1.0",
+    "minimist": "^1.2.5",
+    "@testing-library/react-hooks": "^7.0.1",
+    "react-test-renderer": "^17.0.2"
+  },
+  "basePath": "/exp/sample-bt-help-app",
+  "scripts": {
+    "build": "next build && (shx cp -rf ./public ./.next || true)",
+    "clean": "rimraf .next",
+    "dev": "next",
+    "format": "prettier --write \"./{src,test}/**/*.{js,jsx,ts,tsx}\"",
+    "lint": "eslint \"./{src,test}/**/*.{js,jsx,ts,tsx}\" --fix",
+    "setup-npmrc": "echo \"\" >> .npmrc && echo \"//npm.pkg.github.com/:_authToken=$NPM_TOKEN\" >> .npmrc",
+    "start": "next start",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:coverage-badges": "jest-coverage-badges && mv coverage .coverage",
+    "type-check": "tsc",
+    "deploy": "echo local deployment removed, commit your code to deploy using GitHub actions",
+    "linkPackage": "node ./link-package.js"
+  },
+  "dependencies": {
+    "@btplc/ui-kit": "^0.3.4",
+    "@material-ui/core": "^4.11.0",
+    "next": "10.2.3",
+    "enzyme": "^3.11.0",
+    "enzyme-adapter-react-16": "1.15.3",
+    "jest-enzyme": "^7.1.2",
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
+    "next-seo": "^4.24.0",
+    "axios": "^0.20.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn format && yarn lint"
+    }
+  }
+}

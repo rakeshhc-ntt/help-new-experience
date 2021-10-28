@@ -1,0 +1,54 @@
+name: Updates staging reverse proxy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  Deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    strategy:
+      matrix:
+        node-version:
+          - 12.13
+
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Checkout actions repo
+        uses: actions/checkout@v2
+        with:
+          repository: btplc/github-actions
+          path: .github/actions
+          token: ${{ secrets.GIT_PAT }}
+      - name: Install actions
+        run: cd .github/actions && yarn --frozen-lockfile
+
+      - name: Get stack info
+        uses: ./.github/actions/dist/actions/getStackInfo
+        id: getStackInfo
+        with:
+          root: ${{github.workspace}}
+          ref: ${{ github.ref }}
+          repo: ${{ github.repository }}
+          dns: ee
+
+      - name: Update CDN route
+        if: |
+          steps.getStackInfo.outputs.basePath!='' &&
+          github.ref == 'refs/heads/develop'
+        uses: ./.github/actions/dist/actions/jenkins-job
+        with:
+          url: ${{ secrets.JENKINS_URL }}
+          username: ${{ secrets.JENKINS_USER }}
+          token: ${{ secrets.JENKINS_TOKEN }}
+          jobName: github-job-apigw-routes
+          jobParams: |
+            platform=${{steps.getStackInfo.outputs.platform}}
+            stage=${{steps.getStackInfo.outputs.stage}}
+            serverlessVersion=2.1.10
+          params: |
+            api_id:${{ secrets.EE_API_GW_STAGING }}
+            uri:${{steps.getStackInfo.outputs.basePath}}
+            origin:${{steps.getStackInfo.outputs.origin}}

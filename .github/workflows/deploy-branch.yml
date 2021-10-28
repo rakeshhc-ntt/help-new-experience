@@ -1,0 +1,176 @@
+name: Deploy feature/develop branch
+
+on:
+  
+  workflow_dispatch:
+  push:
+    branches:
+      #### By default we are not deploying for each branch
+      #### Your code will be deployed when you create a PR
+      #### If you need to deploy a branch before creating the PR
+      #### You can
+      #### Manually deploy the branch by going to GitHub actions (recommended)
+      #### and choosing Deploy feature/develop branch
+      ####
+      #### OR
+      #### Un-commit following two lines
+      #- "*" # matches every branch
+      #- "*/*" # matches every branch containing a single '/'
+      - "develop" # include develop for staging
+      - "!master" # excludes master
+
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  Deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      matrix:
+        node-version:
+          - 12.13
+
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Restore node_modules from cache
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Install
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          echo "" >> .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PACKAGES_TOKEN }}" >> .npmrc
+          yarn install --frozen-lockfile --ignore-scripts
+
+      - name: Checkout actions repo
+        uses: actions/checkout@v2
+        with:
+          repository: btplc/github-actions
+          path: .github/actions
+          token: ${{ secrets.GIT_PAT }}
+      - name: Install actions
+        run: cd .github/actions && yarn --frozen-lockfile
+
+      - name: Get stack info
+        uses: ./.github/actions/dist/actions/getStackInfo
+        id: getStackInfo
+        with:
+          getCurrentHttpStatus: true
+          root: ${{github.workspace}}
+          ref: ${{ github.ref }}
+          repo: ${{ github.repository }}
+          dns: ee
+
+      - name: Build
+        run: yarn build
+        env:
+          NODE_ENV: ${{ steps.getStackInfo.outputs.buildEnv }}
+
+      - name: Deploy code
+        uses: ./.github/actions/dist/actions/jenkins-job
+        with:
+          url: ${{ secrets.JENKINS_URL }}
+          username: ${{ secrets.JENKINS_USER }}
+          token: ${{ secrets.JENKINS_TOKEN }}
+          jobName: github-job-deploy
+          jobParams: |
+            platform=${{steps.getStackInfo.outputs.platform}}
+            stage=${{steps.getStackInfo.outputs.stage}}
+            serverlessVersion=2.1.10
+            build.zip=file:${{github.workspace}}/.next
+          # Special list of parameters to custom deploy
+          ##### Add following line starting with webAclName in the params list
+          #####
+          ##### to restrict environment access only from BT VPN
+          ##### Staging should be still accessible from from BT Limelight url
+          #--webAclName=${{steps.getStackInfo.outputs.buildEnv=='staging' && secrets.WEB_ACL_VPN_ONLY_OR_APIGW || secrets.WEB_ACL_VPN_ONLY}}
+          ##### To open non staging environment access to public and restrict staging from VPN or APIGW
+          ##### Staging should be still accessible from from BT Limelight url
+          #--webAclName=${{steps.getStackInfo.outputs.buildEnv=='staging' && secrets.WEB_ACL_VPN_ONLY_OR_APIGW || ''}}
+          params: |
+            --nodeVersion=nodejs12.x 
+            --dns=ee
+
+      ### Automatically adds APIGW for staging
+      - name: Update CDN route
+        if: |
+          steps.getStackInfo.outputs.basePath!='' &&
+          github.ref == 'refs/heads/develop' &&
+          steps.getStackInfo.outputs.currentHttpStatus==404
+        uses: ./.github/actions/dist/actions/jenkins-job
+        with:
+          url: ${{ secrets.JENKINS_URL }}
+          username: ${{ secrets.JENKINS_USER }}
+          token: ${{ secrets.JENKINS_TOKEN }}
+          jobName: github-job-apigw-routes
+          jobParams: |
+            platform=${{steps.getStackInfo.outputs.platform}}
+            stage=${{steps.getStackInfo.outputs.stage}}
+            serverlessVersion=2.1.10
+          params: |
+            api_id:${{ secrets.EE_API_GW_STAGING }}
+            uri:${{steps.getStackInfo.outputs.basePath}}
+            origin:${{steps.getStackInfo.outputs.origin}}
+
+      - name: App Proxy URL (Only for staging)
+        if: steps.getStackInfo.outputs.buildEnv=='staging'
+        run: |
+          echo "App Proxy URL: ${{ steps.getStackInfo.outputs.appUrl }}"
+
+      - name: App Internal URL
+        run: |
+          echo "App internal URL: ${{ steps.getStackInfo.outputs.appInternalUrl }}"
+
+      - name: Update PR/Issue
+        uses: ./.github/actions/comment
+        with:
+          body: "App deployed on ${{ steps.getStackInfo.outputs.appUrl }}"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      
+      - name: Wait for URL
+        uses: ./.github/actions/wait-for-url
+        with:
+          url: ${{ steps.getStackInfo.outputs.appUrl }}
+          retryDelay: 3000
+          retries: 30
+      
+      
+      
+      - run: mkdir /tmp/artifacts
+
+      - name: get next.js routes step
+        id: get-nextjs-routes
+        uses: ./.github/actions/get-nextjs-routes
+        with:
+          base-url: "${{ steps.getStackInfo.outputs.appUrl }}"
+          verbose: true
+
+      - name: Run Lighthouse
+        uses: foo-software/lighthouse-check-action@master
+        with:
+          accessToken: ${{ secrets.GITHUB_TOKEN }}
+          author: ${{ github.actor }}
+          branch: ${{ github.ref }}
+          outputDirectory: /tmp/artifacts
+          urls: "${{ steps.get-nextjs-routes.outputs.links }}"
+          sha: ${{ github.sha }}
+          slackWebhookUrl: ${{ secrets.LIGHTHOUSE_CHECK_WEBHOOK_URL }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@master
+        with:
+          name: Lighthouse reports
+          path: /tmp/artifacts
+      
+  
